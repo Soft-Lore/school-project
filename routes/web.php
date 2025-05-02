@@ -3,5 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return json_encode([
+        'message' => 'Welcome to the Laravel API!'
+    ]);
 });
