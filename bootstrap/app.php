@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->group('api', [
-            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api/v1',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);
     })
