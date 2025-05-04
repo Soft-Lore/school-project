@@ -4,27 +4,33 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\AuthService;
 
 class AuthController extends Controller
 {
     public function __construct(
-        protected UserRepositoryInterface $users
+        protected AuthService $auth
     ) {}
 
     public function login(Request $request)
     {
-        $user = $this->users->findByUsername($request->user_name);
+        $token = $this->auth->login($request->user_name, $request->password);
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$token) {
             return response()->json(['message' => 'Credenciales inválidas'], 401);
         }
 
-        $token = $user->createToken('api-token')->plainTextToken;
-
         return response()->json(['token' => $token]);
+    }
+
+    public function logout(Request $request)
+    {
+        $this->auth->logout($request->user());
+        return response()->json(['message' => 'Token eliminado']);
+    }
+
+    public function me(Request $request)
+    {
+        return response()->json($request->user());
     }
 }
