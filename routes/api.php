@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\AuthController;
 
+Route::prefix('v1')->group(function () {
 /*
 |--------------------------------------------------------------------------
 | Routes Publics (unauthenticated)
@@ -33,4 +34,6 @@ Route::middleware('auth:sanctum')->group(function () {
             'user' => $request->user(),
         ]);
     });
+ });
+ 
 });
