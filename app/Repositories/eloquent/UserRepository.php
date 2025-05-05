@@ -12,11 +12,16 @@ class UserRepository implements UserRepositoryInterface
         return User::where('user_name', $user_name)->first();
     }
 
+    public function findById(int $id): ?User
+    {
+        return User::find($id);
+    }
+
     public function create(array $data): User
     {
         return User::create($data);
     }
-
+    
     public function all(): iterable
     {
         return User::all();

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\DTOs\LoginRequestDto;
 
 class AuthService
 {
@@ -12,11 +13,11 @@ class AuthService
         protected UserRepositoryInterface $users
     ) {}
 
-    public function login(string $user_name, string $password): ?string
+    public function login(LoginRequestDto $dto): ?string
     {
-        $user = $this->users->findByUsername($user_name);
+        $user = $this->users->findByUsername($dto->user_name);
 
-        if (! $user || ! Hash::check($password, $user->password)) {
+        if (! $user || ! Hash::check($dto->password, $user->password)) {
             return null;
         }
 
