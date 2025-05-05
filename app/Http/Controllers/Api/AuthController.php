@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\DTOs\LoginRequestDto;
 use Illuminate\Http\Request;
 use App\Services\AuthService;
 
@@ -14,12 +15,14 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $token = $this->auth->login($request->user_name, $request->password);
-
-        if (!$token) {
+        $dto = LoginRequestDto::fromArray($request->only(['user_name', 'password']));
+    
+        $token = $this->auth->login($dto);
+    
+        if (! $token) {
             return response()->json(['message' => 'Credenciales inválidas'], 401);
         }
-
+    
         return response()->json(['token' => $token]);
     }
 
