@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\DTOs\CreateUserDto;
 use App\Models\User;
-use App\Actions\CreateUserAction;
+use App\Actions\User\CreateUserAction;
 use App\Actions\User\DeleteUserAction;
 use App\Actions\User\UpdateUserAction;
+use App\DTOs\User\CreateUserDto;
 use App\DTOs\User\DeleteUserDto;
 use App\DTOs\User\UpdateUserDto;
 use App\Repositories\Contracts\UserRepositoryInterface;

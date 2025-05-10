@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Repositories\Contracts\UserRepositoryInterface;
-use App\DTOs\LoginRequestDto;
+use App\DTOs\Auth\LoginRequestDto;
 
 class AuthService
 {

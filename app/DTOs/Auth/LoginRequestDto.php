@@ -1,7 +1,17 @@
 <?php
 
-namespace App\DTOs;
+namespace App\DTOs\Auth;
 
+
+/**
+ * @OA\Schema(
+ *     schema="LoginRequestDto",
+ *     type="object",
+ *     required={"user_name", "password"},
+ *     @OA\Property(property="user_name", type="string", example="mhernandez"),
+ *     @OA\Property(property="password", type="string", example="12345678")
+ * )
+ */
 class LoginRequestDto
 {
     public function __construct(
