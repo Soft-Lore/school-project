@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DTOs\User\ChangePasswordDto;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\UserService;
 use App\DTOs\User\CreateUserDto;
 use App\DTOs\User\DeleteUserDto;
 use App\DTOs\User\UpdateUserDto;
+use App\DTOs\User\UserFilterDto;
 
 class UserController extends Controller
 {
@@ -40,6 +42,32 @@ class UserController extends Controller
     {
         return response()->json($this->userService->getAllUsers());
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/users",
+     *     summary="Buscar usuarios por nombre o cédula",
+     *     tags={"Usuarios"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         required=false,
+     *         description="Texto a buscar (nombre, usuario o cédula)",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista filtrada de usuarios"
+     *     )
+     * )
+     */
+    public function filter(Request $request)
+    {
+        $dto = UserFilterDto::fromQuery($request->query());
+        return response()->json($this->userService->filterUsers($dto));
+    }
+
     /**
      * @OA\Post(
      *     path="/api/v1/users/register",
@@ -118,6 +146,46 @@ class UserController extends Controller
             ? response()->json($user)
             : response()->json(['message' => 'Usuario no encontrado'], 404);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/users/change-password",
+     *     summary="Cambiar contraseña del usuario autenticado",
+     *     tags={"Usuarios"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"current_password", "new_password"},
+     *             @OA\Property(property="current_password", type="string", example="12345678"),
+     *             @OA\Property(property="new_password", type="string", example="nuevaClave123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Contraseña cambiada correctamente"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Contraseña actual incorrecta"
+     *     )
+     * )
+     */
+    public function changePassword(Request $request)
+    {
+        $dto = ChangePasswordDto::fromArray(
+            $request->only(['current_password', 'new_password']),
+            $request->user()->id
+        );
+
+        $success = $this->userService->changePassword($dto);
+
+        return $success
+            ? response()->json(['message' => 'Contraseña actualizada correctamente'])
+            : response()->json(['message' => 'Contraseña actual incorrecta'], 400);
+    }
+
+
 
     /**
      * @OA\Delete(

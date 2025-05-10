@@ -29,9 +29,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
     });
 
-    Route::middleware('auth:sanctum')->prefix('users')->group(function () {
-        Route::post('register', [UserController::class, 'register']);
+    Route::prefix('users')->group(function () {
+        Route::post('/register', [UserController::class, 'register']);
         Route::put('/update', [UserController::class, 'update']);
-        Route::get('/', [UserController::class, 'index']);
+        Route::delete('/delete', [UserController::class, 'delete']);
+        Route::post('/change-password', [UserController::class, 'changePassword']);
+        Route::get('/', [UserController::class, 'filter']); // Con ?search=... como parámetro opcional
     });
 });
