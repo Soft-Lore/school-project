@@ -16,16 +16,23 @@ class UserController extends Controller
     public function __construct(
         protected UserService $userService
     ) {}
-    
+
     /**
      * @OA\Get(
      *     path="/api/v1/users",
-     *     summary="Listar todos los usuarios",
+     *     summary="Listar o buscar usuarios",
      *     tags={"Usuarios"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         required=false,
+     *         description="Texto a buscar (nombre, usuario o cédula)",
+     *         @OA\Schema(type="string")
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de usuarios",
+     *         description="Lista de usuarios filtrados o completa",
      *         @OA\JsonContent(
      *             type="array",
      *             @OA\Items(
@@ -38,35 +45,17 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function index()
-    {
-        return response()->json($this->userService->getAllUsers());
-    }
-
-    /**
-     * @OA\Get(
-     *     path="/api/v1/users",
-     *     summary="Buscar usuarios por nombre o cédula",
-     *     tags={"Usuarios"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         required=false,
-     *         description="Texto a buscar (nombre, usuario o cédula)",
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Lista filtrada de usuarios"
-     *     )
-     * )
-     */
-    public function filter(Request $request)
+    public function index(Request $request)
     {
         $dto = UserFilterDto::fromQuery($request->query());
-        return response()->json($this->userService->filterUsers($dto));
+
+        $users = $dto->search
+            ? $this->userService->filterUsers($dto)
+            : $this->userService->getAllUsers();
+
+        return response()->json($users);
     }
+
 
     /**
      * @OA\Post(

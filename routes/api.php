@@ -30,10 +30,10 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
         Route::post('/register', [UserController::class, 'register']);
         Route::put('/update', [UserController::class, 'update']);
         Route::delete('/delete', [UserController::class, 'delete']);
         Route::post('/change-password', [UserController::class, 'changePassword']);
-        Route::get('/', [UserController::class, 'filter']); // Con ?search=... como parámetro opcional
     });
 });
