@@ -27,14 +27,6 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
-
-        // Private test endpoint
-        Route::get('/private-check', function (Request $request) {
-            return response()->json([
-                'message' => 'Ruta protegida funcionando',
-                'user' => $request->user(),
-            ]);
-        });
     });
 
     Route::middleware('auth:sanctum')->prefix('users')->group(function () {
