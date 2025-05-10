@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\User;
+use App\DTOs\User\UserFilterDto;
 
 interface UserRepositoryInterface
 {
@@ -11,6 +12,8 @@ interface UserRepositoryInterface
     public function findById(int $id): ?User;
 
     public function create(array $data): User;
+    
+    public function filter(UserFilterDto $dto): iterable;
 
     public function all(): iterable;
 }
