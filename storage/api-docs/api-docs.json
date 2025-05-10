@@ -123,11 +123,22 @@
                 "tags": [
                     "Usuarios"
                 ],
-                "summary": "Listar todos los usuarios",
+                "summary": "Listar o buscar usuarios",
                 "operationId": "b343fe695d1beaa03b7deb8449dd1b7c",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Texto a buscar (nombre, usuario o cédula)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Lista de usuarios",
+                        "description": "Lista de usuarios filtrados o completa",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -282,6 +293,52 @@
                 "security": [
                     {
                         "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/change-password": {
+            "post": {
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Cambiar contraseña del usuario autenticado",
+                "operationId": "e109425db0d0e8ecb489574d27f9235c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "new_password"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "example": "12345678"
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "example": "nuevaClave123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contraseña cambiada correctamente"
+                    },
+                    "400": {
+                        "description": "Contraseña actual incorrecta"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
                     }
                 ]
             }
