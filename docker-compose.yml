@@ -24,19 +24,24 @@ services:
     depends_on:
       - app
 
+  services:
   mysql:
     image: mysql:8.0
-    container_name: laravel_mysql
-    restart: unless-stopped
-    environment:
+    env:
       MYSQL_DATABASE: laravel
-      MYSQL_USER: user
-      MYSQL_PASSWORD: secret
-      MYSQL_ROOT_PASSWORD: rootpass
-    volumes:
-      - dbdata:/var/lib/mysql
+      MYSQL_ROOT_PASSWORD: root
     ports:
-      - "3307:3306"
+      - 3307:3306
+
 
 volumes:
   dbdata:
+
+
+env:
+  DB_CONNECTION: mysql
+  DB_HOST: 127.0.0.1
+  DB_PORT: 3307
+  DB_DATABASE: laravel
+  DB_USERNAME: root
+  DB_PASSWORD: root

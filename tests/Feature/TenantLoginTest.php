@@ -3,20 +3,23 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use App\Models\School;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use App\Models\School;
+use App\Models\User;
 
-class LoginTest extends TestCase
+class TenantLoginTest extends TestCase
 {
-    use RefreshDatabase;
-
-   protected function setUp(): void
+    public function setUp(): void
 {
     parent::setUp();
 
     School::where('subdomain', 'colegio-demo')->delete();
+
+    $this->assertEquals('mysql', config('database.default'), 'La conexión por defecto NO es MySQL');
+
+    Artisan::call('migrate');
 
     School::create([
         'name' => 'Colegio Demo',
@@ -28,8 +31,10 @@ class LoginTest extends TestCase
         'db_password' => 'root',
     ]);
 
-    DB::statement('DROP DATABASE IF EXISTS colegio_demo_db');
-    DB::statement('CREATE DATABASE colegio_demo_db');
+    if (config('database.default') === 'mysql') {
+        DB::statement('DROP DATABASE IF EXISTS colegio_demo_db');
+        DB::statement('CREATE DATABASE colegio_demo_db');
+    }
 
     config()->set("database.connections.tenant", [
         'driver' => 'mysql',
@@ -43,6 +48,8 @@ class LoginTest extends TestCase
     ]);
 
     DB::purge('tenant');
+   
+
     DB::connection('tenant')->getPdo();
 
     Artisan::call('migrate', [
@@ -52,28 +59,29 @@ class LoginTest extends TestCase
     ]);
 
     DB::connection('tenant')->table('users')->insert([
-        'first_name' => 'Admin',
+        'first_name' => 'Test',
         'second_name' => 'User',
-        'user_name' => 'admin',
+        'user_name' => 'testuser',
         'password' => bcrypt('12345678'),
         'cedula' => '123456789',
         'address' => 'San José',
         'is_enable' => true,
-        'email_address' => 'admin@demo.com',
+        'email_address' => 'test@example.com',
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
 }
 
-    public function test_login_returns_token_for_valid_credentials()
+
+    public function test_login_returns_token_for_valid_user()
     {
         $response = $this->postJson('/api/v1/schools/login?school=colegio-demo', [
-            'user_name' => 'admin',
-            'password' => '12345678'
+            'user_name' => 'testuser',
+            'password' => '12345678',
         ]);
 
-        $response->assertStatus(200)
-                 ->assertJsonStructure(['token']);
+        $response->assertStatus(200);
+        $response->assertJsonStructure(['token']);
     }
 }
