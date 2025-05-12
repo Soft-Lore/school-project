@@ -69,7 +69,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $this->auth->logout($request->user());
-        return response()->json(['message' => 'Token eliminado']);
+        return response()->json(['message' => 'Token eliminado'], 200);
     }
 
     /**
