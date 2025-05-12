@@ -1,178 +1,102 @@
-##  Entorno de desarrollo
+#  Multitenant SaaS API - SCHOOL SERVICE
 
-###  Estructura del proyecto principal
+Este proyecto está diseñado como una API multitenant en Laravel 12, donde cada escuela registrada en el sistema obtiene su propia base de datos aislada.
+
+##  Estructura del proyecto
 
 ```
 project-root/
-├── docker/
-│   ├── php/
-│   │   └── Dockerfile
-│   ├── nginx/
-│   │   └── default.conf
-├── .env
-├── docker-compose.yml
-├── README.md
-├── .github/workflows/phpunit.yml
-├── app/
-│   ├── Actions/
-│   │   └── User/
-│   ├── DTOs/
-│   │   └── User/
-│   ├── Repositories/
-│   │   ├── Contracts/
-│   │   └── Eloquent/
-│   ├── Services/
-│   └── Http/Controllers/Api/
-└── (archivos Laravel)
+├── app/Http/Middleware/EnsureTenantConnection.php
+├── app/DTOs/
+│   └── Auth/, School/, User/
+├── app/Services/
+├── app/Actions/
+├── database/migrations/tenant/
+├── routes/api.php
+└── .env.testing
 ```
 
 ---
 
-##  Requisitos previos
+##  Requisitos
 
-- Docker: https://docs.docker.com/get-docker/
-- Docker Compose (incluido en Docker Desktop)
+* Docker + Docker Compose
+* PHP >= 8.3
+* MySQL (contenedor en Docker)
 
 ---
 
-##  Pasos para levantar el proyecto
-
-### 1. Clonar el repositorio o iniciar el proyecto
+##  Cómo levantar el proyecto
 
 ```bash
-git clone <url-del-repo>
-cd <nombre-del-proyecto>
-```
-
-O crear con Composer:
-
-```bash
-composer create-project laravel/laravel . "^12.0"
-```
-
-### 2. Configurar el archivo `.env`
-
-```bash
+git clone <repo>
+cd <project>
 cp .env.example .env
+docker-compose up -d --build
+docker exec -it laravel_app php artisan key:generate
+docker exec -it laravel_app php artisan migrate
 ```
 
-Variables esenciales:
+---
+
+##  Registro de escuelas
+
+```http
+POST /api/v1/schools/register
+
+Body JSON:
+{
+  "name": "Colegio Bautista",
+  "admin_email": "admin@colegiomv.com",
+  "admin_password": "12345678"
+}
+```
+
+* Crea un registro en la tabla `schools` (base principal)
+* Crea una base de datos propia como `colegio-bautista_db`
+* Ejecuta las migraciones de `database/migrations/tenant`
+* Crea un usuario administrador en la base del colegio
+
+---
+
+## 🧪 Tests
+
+Para ejecutar los tests con MySQL:
+
+1. Asegúrate de tener `.env.testing` con esta config:
 
 ```env
 DB_CONNECTION=mysql
 DB_HOST=mysql
 DB_PORT=3306
 DB_DATABASE=laravel
-DB_USERNAME=user
-DB_PASSWORD=secret
+DB_USERNAME=root
+DB_PASSWORD=root
 ```
 
-### 3. Construir e iniciar contenedores
-
-```bash
-docker-compose up -d --build
-```
-
-Contenedores levantados:
-- `laravel_app`: PHP y Laravel
-- `laravel_nginx`: Servidor web Nginx
-- `laravel_mysql`: Base de datos MySQL
-
-### 4. Generar la clave de aplicación
-
-```bash
-docker exec -it laravel_app php artisan key:generate
-```
-
----
-
-##  Acceder a la API
-
-- Navegador: http://localhost:8000
-- Documentación: http://localhost:8000/api/documentation
-
----
-
-##  Pruebas y CI
-
-### Tests locales
+2. Ejecuta:
 
 ```bash
 docker exec -it laravel_app php artisan test
 ```
 
-### GitHub Actions (CI)
-- Ejecuta `php artisan test` automáticamente al hacer PR a `develop` o `main`.
-- Utiliza archivo `.github/workflows/phpunit.yml`
-
-### `.env.testing` de ejemplo
-
-```env
-APP_ENV=testing
-APP_KEY=base64:...
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=testing
-DB_USERNAME=user
-DB_PASSWORD=secret
-CACHE_DRIVER=file
-SESSION_DRIVER=file
-QUEUE_CONNECTION=sync
-```
-
----
-
-##  Autenticación
-
-- Laravel Sanctum con tokens Bearer
-
-### Headers necesarios para endpoints protegidos:
-
-```
-Authorization: Bearer <token>
-```
-
----
-
-## Documentación Swagger
-
-- UI interactiva: http://localhost:8000/api/documentation
-- Generar documentación manualmente:
+3. Para un test específico:
 
 ```bash
-docker exec -it laravel_app php artisan l5-swagger:generate
+docker exec -it laravel_app php artisan test --filter=TenantLoginTest
 ```
 
 ---
 
-## Funcionalidades actuales
-
-| Endpoint                         | Método | Función                                     |
-|----------------------------------|--------|---------------------------------------------|
-| `/api/v1/login`                 | POST   | Iniciar sesión y recibir token              |
-| `/api/v1/logout`                | POST   | Cerrar sesión y revocar token               |
-| `/api/v1/me`                    | GET    | Obtener usuario autenticado                 |
-| `/api/v1/users`                | GET    | Listar o filtrar usuarios (`?search=`)      |
-| `/api/v1/users/register`        | POST   | Crear nuevo usuario                         |
-| `/api/v1/users/update`          | PUT    | Actualizar información del usuario          |
-| `/api/v1/users/delete`          | DELETE | Eliminar un usuario                         |
-| `/api/v1/users/change-password` | POST   | Cambiar contraseña del usuario autenticado  |
-
----
-
-## Comandos útiles
+##  Comandos útiles
 
 ```bash
-# Ver contenedores activos
-docker ps
+# Verificar si un colegio está correctamente conectado
+php artisan tenant:check colegio-bautista
 
-# Entrar al contenedor Laravel
+# Ingresar al contenedor
 docker exec -it laravel_app bash
 
-# Ejecutar migraciones
-docker exec -it laravel_app php artisan migrate
-
-# Apagar y eliminar contenedores
-docker-compose down
+# Correr migraciones de tenant
+php artisan migrate --database=tenant --path=database/migrations/tenant --force
 ```
