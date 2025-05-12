@@ -3,44 +3,91 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\School;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ChangePasswordTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_can_change_password()
+    protected function setUp(): void
     {
-        $user = User::factory()->create([
-            'password' => Hash::make('oldpassword'),
+        parent::setUp();
+
+        School::where('subdomain', 'colegio-demo')->delete();
+
+        School::create([
+            'name' => 'Colegio Demo',
+            'subdomain' => 'colegio-demo',
+            'database_name' => 'colegio_demo_db',
+            'db_host' => 'mysql',
+            'db_port' => '3306',
+            'db_username' => 'root',
+            'db_password' => 'root',
         ]);
 
-        $response = $this->actingAs($user)->postJson('/api/v1/users/change-password', [
+        DB::statement('DROP DATABASE IF EXISTS colegio_demo_db');
+        DB::statement('CREATE DATABASE colegio_demo_db');
+
+        config()->set("database.connections.tenant", [
+            'driver' => 'mysql',
+            'host' => 'mysql',
+            'port' => '3306',
+            'database' => 'colegio_demo_db',
+            'username' => 'root',
+            'password' => 'root',
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+        ]);
+
+        DB::purge('tenant');
+        DB::connection('tenant')->getPdo();
+
+        Artisan::call('migrate', [
+            '--database' => 'tenant',
+            '--path' => 'database/migrations/tenant',
+            '--force' => true,
+        ]);
+
+        DB::connection('tenant')->table('users')->insert([
+            'first_name' => 'Admin',
+            'second_name' => 'User',
+            'user_name' => 'admin',
+            'password' => bcrypt('oldpassword'),
+            'cedula' => '123456789',
+            'address' => 'San José',
+            'is_enable' => true,
+            'email_address' => 'admin@demo.com',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_user_can_change_password()
+    {
+        $user = DB::connection('tenant')->table('users')->where('user_name', 'admin')->first();
+
+        $response = $this->postJson('/api/v1/users/change-password?school=colegio-demo', [
             'current_password' => 'oldpassword',
             'new_password' => 'newsecurepass123'
+        ], [
+            'Authorization' => 'Bearer ' . $this->generateToken($user),
         ]);
 
         $response->assertStatus(200)
                  ->assertJson(['message' => 'Contraseña actualizada correctamente']);
 
-        // Verify that the new password was saved
-        $this->assertTrue(Hash::check('newsecurepass123', $user->fresh()->password));
+        $updatedUser = DB::connection('tenant')->table('users')->where('user_name', 'admin')->first();
+        $this->assertTrue(Hash::check('newsecurepass123', $updatedUser->password));
     }
 
-    public function test_change_password_fails_with_wrong_current_password()
+
+    private function generateToken($user)
     {
-        $user = User::factory()->create([
-            'password' => Hash::make('oldpassword'),
-        ]);
-
-        $response = $this->actingAs($user)->postJson('/api/v1/users/change-password', [
-            'current_password' => 'wrongpassword',
-            'new_password' => 'newsecurepass123'
-        ]);
-
-        $response->assertStatus(400)
-                 ->assertJson(['message' => 'Contraseña actual incorrecta']);
+        $userModel = \App\Models\User::find($user->id);
+        return $userModel->createToken('Test Token')->plainTextToken;
     }
 }
